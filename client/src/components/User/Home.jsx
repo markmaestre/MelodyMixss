@@ -10,13 +10,14 @@ import {
   Dimensions,
   BackHandler,
   ActivityIndicator,
-  ImageBackground
+  Alert
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
 import { removeToken } from '../../utils/auth';
 import { logoutUser } from '../../redux/slices/authSlice';
 import axiosInstance from "../../utils/axiosInstance";
+import * as Notifications from 'expo-notifications';
 
 // Icons
 import Icon from 'react-native-vector-icons/Feather';
@@ -33,14 +34,8 @@ const HomeScreen = ({ navigation }) => {
   const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [categories, setCategories] = useState([
-    { id: 1, title: "Clothing", icon: "tshirt" },
-    { id: 2, title: "Electronics", icon: "tv" },
-    { id: 3, title: "Accessories", icon: "watch" },
-    { id: 4, title: "Home Goods", icon: "home" },
-    { id: 5, title: "Books", icon: "book" },
-    { id: 6, title: "Sports", icon: "basketball-ball" }
-  ]);
+  const [expoPushToken, setExpoPushToken] = useState('');
+  const [notification, setNotification] = useState(false);
   
   const [topPicks, setTopPicks] = useState([
     { id: 1, title: "Summer Collection" },
@@ -48,10 +43,35 @@ const HomeScreen = ({ navigation }) => {
     { id: 3, title: "Best Sellers" }
   ]);
 
+  // Configure notifications handler
+  useEffect(() => {
+    registerForPushNotificationsAsync().then(token => {
+      setExpoPushToken(token);
+      sendWelcomeNotification(token);
+    });
+
+    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+      setNotification(notification);
+    });
+
+    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      const { screen, params } = response.notification.request.content.data;
+      if (screen) {
+        navigation.navigate(screen, params);
+      }
+    });
+
+    return () => {
+      Notifications.removeNotificationSubscription(notificationListener);
+      Notifications.removeNotificationSubscription(responseListener);
+    };
+  }, []);
+
   // Fetch recent orders when component mounts or user changes
   useEffect(() => {
     if (user?._id) {
       fetchRecentOrders();
+      checkForDiscounts();
     }
   }, [user?._id]);
 
@@ -60,7 +80,7 @@ const HomeScreen = ({ navigation }) => {
       setLoading(true);
       setError(null);
       const response = await axiosInstance.get(`/checkout/history/${user._id}`);
-      setRecentOrders(response.data.slice(0, 3)); // Get only the 3 most recent orders
+      setRecentOrders(response.data.slice(0, 3));
     } catch (err) {
       console.error('Error fetching recent orders:', err);
       setError('Failed to load recent orders. Please try again.');
@@ -69,7 +89,110 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
-  // This ensures drawer works after coming back from another screen
+  const registerForPushNotificationsAsync = async () => {
+    try {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      
+      if (finalStatus !== 'granted') {
+        Alert.alert('Permission required', 'Push notifications need the appropriate permissions.');
+        return;
+      }
+      
+      const token = (await Notifications.getExpoPushTokenAsync()).data;
+      return token;
+    } catch (error) {
+      console.error('Error getting push token:', error);
+      return '';
+    }
+  };
+
+  const sendWelcomeNotification = async (token) => {
+    try {
+      const title = '👋 Welcome to MelodyMix!';
+      const body = 'Check out our latest discounts and special offers!';
+      const data = {
+        screen: 'discountNotif',
+        params: { highlightDiscount: true }
+      };
+
+      if (token) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title,
+            body,
+            data,
+            sound: true,
+            vibrate: [0, 250, 250, 250],
+          },
+          trigger: { seconds: 2 },
+        });
+      }
+
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          data,
+          sound: true,
+          vibrate: [0, 250, 250, 250],
+        },
+        trigger: { seconds: 2 },
+      });
+    } catch (error) {
+      console.error('Error sending welcome notification:', error);
+    }
+  };
+
+  const checkForDiscounts = async () => {
+    try {
+      const response = await axiosInstance.get('/discounts');
+      const activeDiscounts = response.data;
+      
+      if (activeDiscounts.length > 0) {
+        const biggestDiscount = activeDiscounts.reduce((prev, current) => 
+          (prev.discountPercentage > current.discountPercentage) ? prev : current
+        );
+        
+        const title = '🔥 Hot Discount Available!';
+        const body = `Don't miss ${biggestDiscount.discountPercentage}% off on ${biggestDiscount.name}`;
+        const data = {
+          screen: 'discountNotif',
+          params: { productId: biggestDiscount._id }
+        };
+
+        if (expoPushToken) {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title,
+              body,
+              data,
+              sound: true,
+            },
+            trigger: { seconds: 5 },
+          });
+        }
+
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title,
+            body,
+            data,
+            sound: true,
+          },
+          trigger: { seconds: 5 },
+        });
+      }
+    } catch (error) {
+      console.error('Error checking for discounts:', error);
+    }
+  };
+
   useFocusEffect(
     React.useCallback(() => {
       setDrawerInitialized(true);
@@ -79,7 +202,6 @@ const HomeScreen = ({ navigation }) => {
     }, [])
   );
 
-  // Handle back button press
   useEffect(() => {
     const backHandler = BackHandler.addEventListener(
       'hardwareBackPress',
@@ -103,11 +225,7 @@ const HomeScreen = ({ navigation }) => {
 
   const toggleDrawer = () => {
     if (!drawerRef.current) return;
-    
-    // Force drawer to reset by closing first
     drawerRef.current.closeDrawer();
-    
-    // Then open after a small delay
     setTimeout(() => {
       if (drawerRef.current) {
         drawerRef.current.openDrawer();
@@ -159,10 +277,10 @@ const HomeScreen = ({ navigation }) => {
           },
           { 
             icon: <MaterialIcon name="shopping-cart" size={22} color="#fff" />, 
-            text: 'My Cart', 
+            text: 'Buy Now', 
             onPress: () => {
               closeDrawer();
-              navigation.navigate('CartScreen');
+              navigation.navigate('Cart');
             }
           },
           { 
@@ -258,7 +376,7 @@ const HomeScreen = ({ navigation }) => {
           </Text>
           <TouchableOpacity 
             style={styles.shopNowButton}
-            onPress={() => navigation.navigate('Shop')}
+            onPress={() => navigation.navigate('Cart')}
           >
             <Text style={styles.shopNowButtonText}>Shop Now</Text>
           </TouchableOpacity>
@@ -332,29 +450,6 @@ const HomeScreen = ({ navigation }) => {
     </View>
   );
 
-  const renderCategoriesSection = () => (
-    <View style={styles.categoriesContainer}>
-      <View style={styles.sectionHeaderContainer}>
-        <Text style={styles.sectionTitle}>Categories</Text>
-      </View>
-      <View style={styles.categoriesGrid}>
-        {categories.map((category) => (
-          <TouchableOpacity 
-            key={category.id}
-            style={styles.categoryCard}
-            onPress={() => navigation.navigate('Category', { id: category.id })}
-          >
-            <View style={styles.categoryIconContainer}>
-              <FontAwesomeIcon name={category.icon} size={22} color="#1DB954" />
-            </View>
-            <Text style={styles.categoryTitle}>{category.title}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>
-  );
-
-  // Only render DrawerLayoutAndroid when initialized
   if (!drawerInitialized) {
     return (
       <SafeAreaView style={styles.container}>
@@ -374,23 +469,19 @@ const HomeScreen = ({ navigation }) => {
   return (
     <DrawerLayoutAndroid
       ref={drawerRef}
-      key={`drawer-${drawerInitialized}`} // Force re-render when initialized
+      key={`drawer-${drawerInitialized}`}
       drawerWidth={width * 0.8}
       drawerPosition="left"
       drawerLockMode="unlocked"
       renderNavigationView={renderDrawer}
       statusBarBackgroundColor="transparent"
-      onDrawerOpen={() => console.log('Drawer opened')}
-      onDrawerClose={() => console.log('Drawer closed')}
-      onDrawerStateChanged={(state) => console.log('Drawer state:', state)}
     >
       <SafeAreaView style={styles.container}>
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={toggleDrawer}>
             <Icon name="menu" size={24} color="#e0e0e0" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>ShopApp</Text>
+          <Text style={styles.headerTitle}>MelodyMix</Text>
           <View style={styles.headerRight}>
             <TouchableOpacity style={styles.headerIconButton}>
               <Icon name="search" size={22} color="#e0e0e0" />
@@ -405,7 +496,6 @@ const HomeScreen = ({ navigation }) => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Greeting section */}
           <View style={styles.greetingContainer}>
             <Text style={styles.greetingText}>
               Good day, {user?.name?.split(' ')[0] || 'User'}
@@ -415,13 +505,8 @@ const HomeScreen = ({ navigation }) => {
             </Text>
           </View>
 
-          {/* Top Picks */}
           {renderTopPicksSection()}
 
-          {/* Categories section */}
-          {renderCategoriesSection()}
-
-          {/* Recent Orders */}
           <View style={styles.recentActivityContainer}>
             <View style={styles.sectionHeaderContainer}>
               <Text style={styles.sectionTitle}>Recent Orders</Text>
@@ -433,7 +518,6 @@ const HomeScreen = ({ navigation }) => {
           </View>
         </ScrollView>
 
-        {/* Bottom Navigation Bar - Spotify-like */}
         <View style={styles.bottomNav}>
           <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('Home')}>
             <Icon name="home" size={22} color="#1DB954" />
@@ -450,7 +534,7 @@ const HomeScreen = ({ navigation }) => {
             <Text style={styles.bottomNavText}>Categories</Text>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('CartScreen')}>
+          <TouchableOpacity style={styles.bottomNavItem} onPress={() => navigation.navigate('Cart')}>
             <Icon name="shopping-cart" size={22} color="#909090" />
             <Text style={styles.bottomNavText}>Cart</Text>
           </TouchableOpacity>
@@ -487,7 +571,7 @@ const styles = StyleSheet.create({
     marginLeft: 18,
   },
   scrollContent: {
-    paddingBottom: 80, // Account for bottom nav
+    paddingBottom: 80,
   },
   greetingContainer: {
     marginTop: 20,
@@ -504,8 +588,6 @@ const styles = StyleSheet.create({
     color: '#b3b3b3',
     marginTop: 4,
   },
-  
-  // Top Picks section
   topPicksContainer: {
     marginBottom: 25,
   },
@@ -543,45 +625,13 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'flex-end',
     padding: 15,
-    backgroundColor: 'rgba(29, 185, 84, 0.2)', // Slight green tint
+    backgroundColor: 'rgba(29, 185, 84, 0.2)',
   },
   topPickTitle: {
     color: '#ffffff',
     fontSize: 18,
     fontWeight: '700',
   },
-  
-  // Categories section
-  categoriesContainer: {
-    marginBottom: 25,
-  },
-  categoriesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 15,
-  },
-  categoryCard: {
-    width: width / 3 - 20,
-    marginHorizontal: 10,
-    marginBottom: 15,
-    alignItems: 'center',
-  },
-  categoryIconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#212121',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  categoryTitle: {
-    color: '#e0e0e0',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  
-  // Recent Orders section
   recentActivityContainer: {
     marginBottom: 30,
     paddingHorizontal: 20,
@@ -690,8 +740,6 @@ const styles = StyleSheet.create({
     color: '#000',
     fontWeight: '600',
   },
-  
-  // Bottom Navigation
   bottomNav: {
     position: 'absolute',
     bottom: 0,
@@ -716,8 +764,6 @@ const styles = StyleSheet.create({
   bottomNavTextActive: {
     color: '#1DB954',
   },
-  
-  // Drawer styles
   drawerContainer: {
     flex: 1,
     backgroundColor: '#121212',

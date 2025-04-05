@@ -77,16 +77,10 @@ const LoginScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
 
   const handleLogin = () => {
-    // Simple validation
     if (username.trim() === '' || password.trim() === '') {
       Alert.alert('Error', 'Please enter both username and password');
       return;
     }
-    
-    // Here you would typically authenticate with your backend
-    // For demo purposes, we're just simulating successful login
-    
-    // Set user as logged in and navigate to user dashboard
     navigation.navigate('UserDashboard');
   };
 
@@ -307,13 +301,11 @@ const HomeDashboard = ({ navigation }) => {
   const [currentTab, setCurrentTab] = useState('Home');
   const scrollY = new Animated.Value(0);
   const [showSearch, setShowSearch] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // Track login state
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   
-  // Animation values
   const fadeAnim = useState(new Animated.Value(0))[0];
   const searchBarTranslate = useState(new Animated.Value(-50))[0];
 
-  // Header opacity for scroll effect
   const headerOpacity = scrollY.interpolate({
     inputRange: [0, 100],
     outputRange: [0, 1],
@@ -321,7 +313,6 @@ const HomeDashboard = ({ navigation }) => {
   });
 
   useEffect(() => {
-    // Animate content fade in
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 800,
@@ -346,11 +337,8 @@ const HomeDashboard = ({ navigation }) => {
     }
   };
 
-  // Function to handle tab navigation with login check
   const handleTabPress = (tabName) => {
-    // If user tries to access Shop tab or other protected areas
     if ((tabName === 'Shop' || tabName === 'Library') && !isLoggedIn) {
-      // Prompt for login
       Alert.alert(
         "Login Required",
         `Please log in to access the ${tabName} area.`,
@@ -361,7 +349,6 @@ const HomeDashboard = ({ navigation }) => {
       );
     } else {
       setCurrentTab(tabName);
-      // Navigate to appropriate screen (for actual implementation)
     }
   };
 
@@ -389,8 +376,6 @@ const HomeDashboard = ({ navigation }) => {
               { text: "Log In", onPress: () => navigation.navigate('Login') }
             ]
           );
-        } else {
-      
         }
       }}
     >
@@ -429,7 +414,7 @@ const HomeDashboard = ({ navigation }) => {
   );
 
   const renderPlaylistItem = ({ item }) => (
-    <TouchableOpacity style={styles.playlistCard}>
+    <TouchableOpacity style={styles.playlistCard} key={item.id}>
       <Image 
         source={item.image} 
         style={styles.playlistImage} 
@@ -448,12 +433,10 @@ const HomeDashboard = ({ navigation }) => {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#121212" />
       
-      {/* Floating Header */}
       <Animated.View style={[styles.floatingHeader, { opacity: headerOpacity }]}>
         <Text style={styles.headerTitle}>MelodyMix</Text>
       </Animated.View>
       
-      {/* Main Content */}
       <Animated.ScrollView 
         style={[styles.scrollView, { opacity: fadeAnim }]}
         showsVerticalScrollIndicator={false}
@@ -463,7 +446,6 @@ const HomeDashboard = ({ navigation }) => {
         )}
         scrollEventThrottle={16}
       >
-        {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             <Icon name="music" size={26} color="#1DB954" />
@@ -485,7 +467,6 @@ const HomeDashboard = ({ navigation }) => {
           </View>
         </View>
         
-        {/* Search Bar */}
         {showSearch && (
           <Animated.View 
             style={[
@@ -503,7 +484,6 @@ const HomeDashboard = ({ navigation }) => {
           </Animated.View>
         )}
         
-        {/* Now Playing */}
         <TouchableOpacity style={styles.nowPlayingBar}>
           <Image 
             source={IMAGES.nowPlaying} 
@@ -526,7 +506,6 @@ const HomeDashboard = ({ navigation }) => {
           </View>
         </TouchableOpacity>
         
-        {/* Featured Artists */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Featured Artists</Text>
@@ -544,7 +523,6 @@ const HomeDashboard = ({ navigation }) => {
           />
         </View>
         
-        {/* Upcoming Events */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Upcoming Events</Text>
@@ -562,7 +540,6 @@ const HomeDashboard = ({ navigation }) => {
           />
         </View>
         
-        {/* Merchandise */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Merchandise</Text>
@@ -570,8 +547,6 @@ const HomeDashboard = ({ navigation }) => {
               onPress={() => {
                 if (!isLoggedIn) {
                   navigation.navigate('Login');
-                } else {
-                  // Navigate to full shop if logged in
                 }
               }}
             >
@@ -588,7 +563,6 @@ const HomeDashboard = ({ navigation }) => {
           />
         </View>
         
-        {/* Featured Playlists */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Featured Playlists</Text>
@@ -596,16 +570,17 @@ const HomeDashboard = ({ navigation }) => {
               <Text style={styles.seeAllText}>See All</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.playlistsContainer}>
-            {featuredPlaylists.map(item => renderPlaylistItem({ item }))}
-          </View>
+          <FlatList
+            data={featuredPlaylists}
+            renderItem={renderPlaylistItem}
+            keyExtractor={item => item.id}
+            scrollEnabled={false}
+          />
         </View>
         
-        {/* Spacing for bottom tabs */}
         <View style={{ height: 80 }} />
       </Animated.ScrollView>
       
-      {/* Bottom Navigation */}
       <View style={styles.bottomTabs}>
         <TouchableOpacity 
           style={[styles.tabButton, currentTab === 'Home' && styles.activeTab]} 
@@ -643,7 +618,7 @@ const HomeDashboard = ({ navigation }) => {
   );
 };
 
-// Existing styles from your code
+// Styles remain the same as in your original code
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -945,7 +920,6 @@ const styles = StyleSheet.create({
   }
 });
 
-// Login screen styles
 const loginStyles = StyleSheet.create({
   container: {
     flex: 1,
@@ -1061,7 +1035,6 @@ const loginStyles = StyleSheet.create({
   }
 });
 
-// User Dashboard styles
 const userStyles = StyleSheet.create({
   profileSection: {
     alignItems: 'center',

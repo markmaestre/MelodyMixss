@@ -1,15 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
 import React, { useState, useEffect } from 'react';
 import { 
   View, 
@@ -27,7 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { sendPushNotification, sendLocalNotification } from '../../utils/notifications';
 
-const status = () => {
+const Checkout = () => {
   const [checkouts, setCheckouts] = useState([]);
   const [selectedCheckout, setSelectedCheckout] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -415,4 +403,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default status;
+export default Checkout;

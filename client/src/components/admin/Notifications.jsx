@@ -10,7 +10,7 @@ import {
 import axiosInstance from "../../utils/axiosInstance";
 import { Ionicons } from '@expo/vector-icons';
 
-const notif = ({ route }) => {
+const Notifications = ({ route }) => {
   const [checkout, setCheckout] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -217,4 +217,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default notif;
+export default Notifications;

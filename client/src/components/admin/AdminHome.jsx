@@ -1,5 +1,3 @@
-
-
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
@@ -25,6 +23,10 @@ const AdminDashboard = () => {
 
   const goToCheckoutManagement = () => {
     navigation.navigate("Status");
+  };
+
+  const goToDiscountManagement = () => {
+    navigation.navigate("Discount");
   };
 
   return (
@@ -55,6 +57,17 @@ const AdminDashboard = () => {
           </View>
           <Text style={styles.cardTitle}>Manage Orders</Text>
           <Text style={styles.cardDescription}>View and update orders</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.card}
+          onPress={goToDiscountManagement}
+        >
+          <View style={styles.cardIcon}>
+            <Ionicons name="pricetag-outline" size={32} color="#E91E63" />
+          </View>
+          <Text style={styles.cardTitle}>Manage Discounts</Text>
+          <Text style={styles.cardDescription}>Create and manage discounts</Text>
         </TouchableOpacity>
       </View>
       

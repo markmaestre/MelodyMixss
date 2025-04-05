@@ -13,6 +13,8 @@ import AdminHome from "../components/admin/AdminHome";
 import Product from "../components/admin/Product";
 import ModifyCheckout from "../components/admin/ModifyCheckout";
 import Notifications from "../components/admin/Notifications";
+import DiscountManagement from "../components/admin/DiscountManagement";
+import DiscountNotifications from "../components/admin/DiscountNotifications";
 
 const Stack = createStackNavigator();
 
@@ -46,7 +48,8 @@ const Navigator = () => (
     <Stack.Screen name="Products" component={Product} />
     <Stack.Screen name="Notif" component={Notifications} />
     <Stack.Screen name="Status" component={ModifyCheckout} />
-  
+    <Stack.Screen name="Discount" component={DiscountManagement} />
+    <Stack.Screen name="discountNotif" component={DiscountNotifications} />
    
   </Stack.Navigator>
 );
