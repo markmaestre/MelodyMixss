@@ -10,7 +10,8 @@ import {
   Dimensions,
   BackHandler,
   ActivityIndicator,
-  Alert
+  Alert,
+  Image
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -38,12 +39,26 @@ const HomeScreen = ({ navigation }) => {
   const [notification, setNotification] = useState(false);
   
   const [topPicks, setTopPicks] = useState([
-    { id: 1, title: "Summer Collection" },
-    { id: 2, title: "New Arrivals" },
-    { id: 3, title: "Best Sellers" }
+    { 
+      id: 1, 
+      title: "Summer Collection",
+      description: "Fresh styles for the warm season",
+      image: require('../../assets/merch/tshirt.jpg') 
+    },
+    { 
+      id: 2, 
+      title: "New Arrivals",
+      description: "Discover our latest products",
+      image: require('../../assets/merch/hoodie.jpg') 
+    },
+    { 
+      id: 3, 
+      title: "Best Sellers",
+      description: "Fan favorites you'll love",
+      image: require('../../assets/merch/poster.jpg') 
+    }
   ]);
 
-  // Configure notifications handler
   useEffect(() => {
     registerForPushNotificationsAsync().then(token => {
       setExpoPushToken(token);
@@ -67,7 +82,6 @@ const HomeScreen = ({ navigation }) => {
     };
   }, []);
 
-  // Fetch recent orders when component mounts or user changes
   useEffect(() => {
     if (user?._id) {
       fetchRecentOrders();
@@ -242,9 +256,24 @@ const HomeScreen = ({ navigation }) => {
   const renderDrawer = () => (
     <View style={styles.drawerContainer}>
       <View style={styles.drawerHeader}>
-        <View style={styles.profileCircle}>
-          <FontAwesomeIcon name="user" size={40} color="#1DB954" />
-        </View>
+        <TouchableOpacity 
+          onPress={() => {
+            closeDrawer();
+            navigation.navigate('EditProfile');
+          }}
+          activeOpacity={0.8}
+        >
+          {user?.image ? (
+            <Image 
+              source={{ uri: user.image }} 
+              style={styles.profileImage}
+            />
+          ) : (
+            <View style={styles.profileCircle}>
+              <FontAwesomeIcon name="user" size={40} color="#1DB954" />
+            </View>
+          )}
+        </TouchableOpacity>
         <Text style={styles.drawerHeaderText}>{user?.name || 'User'}</Text>
         <Text style={styles.drawerHeaderEmail}>{user?.email || 'user@example.com'}</Text>
       </View>
@@ -260,19 +289,11 @@ const HomeScreen = ({ navigation }) => {
             }
           },
           { 
-            icon: <MaterialIcon name="search" size={22} color="#fff" />, 
-            text: 'Search', 
-            onPress: () => {
-              closeDrawer();
-              navigation.navigate('Search');
-            }
-          },
-          { 
             icon: <MaterialIcon name="person" size={22} color="#fff" />, 
             text: 'Profile', 
             onPress: () => {
               closeDrawer();
-              navigation.navigate('Profile');
+              navigation.navigate('EditProfile');
             }
           },
           { 
@@ -288,25 +309,17 @@ const HomeScreen = ({ navigation }) => {
             text: 'Orders', 
             onPress: () => {
               closeDrawer();
-              navigation.navigate('Orders');
+              navigation.navigate('CartHistory');
             }
           },
           { 
-            icon: <FontAwesomeIcon name="heart" size={20} color="#fff" />, 
-            text: 'Wishlist', 
+            icon: <MaterialIcon name="rate-review" size={22} color="#fff" />, 
+            text: 'Reviews', 
             onPress: () => {
               closeDrawer();
-              navigation.navigate('Wishlist');
+              navigation.navigate('ReviewsHistory');
             }
           },
-          { 
-            icon: <Icon name="settings" size={22} color="#fff" />, 
-            text: 'Settings', 
-            onPress: () => {
-              closeDrawer();
-              navigation.navigate('Settings');
-            }
-          }
         ].map((item, index) => (
           <TouchableOpacity 
             key={index}
@@ -435,14 +448,20 @@ const HomeScreen = ({ navigation }) => {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.topPicksScrollContent}
       >
-        {topPicks.map((item, index) => (
+        {topPicks.map((item) => (
           <TouchableOpacity 
             key={item.id}
             style={styles.topPickCard}
             onPress={() => navigation.navigate('Collection', { id: item.id })}
           >
+            <Image 
+              source={item.image} 
+              style={styles.topPickImage}
+              resizeMode="cover"
+            />
             <View style={styles.topPickContent}>
               <Text style={styles.topPickTitle}>{item.title}</Text>
+              <Text style={styles.topPickDescription}>{item.description}</Text>
             </View>
           </TouchableOpacity>
         ))}
@@ -510,7 +529,7 @@ const HomeScreen = ({ navigation }) => {
           <View style={styles.recentActivityContainer}>
             <View style={styles.sectionHeaderContainer}>
               <Text style={styles.sectionTitle}>Recent Orders</Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Orders')}>
+              <TouchableOpacity onPress={() => navigation.navigate('CartHistory')}>
                 <Text style={styles.seeAllText}>See All</Text>
               </TouchableOpacity>
             </View>
@@ -614,23 +633,31 @@ const styles = StyleSheet.create({
   },
   topPickCard: {
     width: width * 0.7,
-    height: 160,
+    height: 180,
     marginRight: 15,
     borderRadius: 8,
     overflow: 'hidden',
     backgroundColor: '#333',
   },
-  topPickContent: {
+  topPickImage: {
     width: '100%',
-    height: '100%',
-    justifyContent: 'flex-end',
+    height: '60%',
+  },
+  topPickContent: {
     padding: 15,
-    backgroundColor: 'rgba(29, 185, 84, 0.2)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    height: '40%',
+    justifyContent: 'center',
   },
   topPickTitle: {
     color: '#ffffff',
     fontSize: 18,
     fontWeight: '700',
+    marginBottom: 5,
+  },
+  topPickDescription: {
+    color: '#b3b3b3',
+    fontSize: 14,
   },
   recentActivityContainer: {
     marginBottom: 30,
@@ -774,6 +801,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#212121',
   },
+  profileImage: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    marginBottom: 15,
+    borderWidth: 2,
+    borderColor: '#1DB954',
+  },
   profileCircle: {
     width: 90,
     height: 90,
@@ -782,6 +817,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 15,
+    borderWidth: 2,
+    borderColor: '#1DB954',
   },
   drawerHeaderText: {
     color: 'white',

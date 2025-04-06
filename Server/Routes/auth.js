@@ -7,6 +7,20 @@ const upload = require("../utils/cloudinary");
 const router = express.Router();
 
 
+router.get("/", async (req, res) => {
+  try {
+  
+    const users = await User.find().select('-password -__v'); 
+    
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ 
+      error: "Failed to fetch users",
+      details: error.message 
+    });
+  }
+});
+
 router.post("/register", upload.single("image"), async (req, res) => {
   const { name, email, password, dob, gender, phone, address } = req.body;
   try {

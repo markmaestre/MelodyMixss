@@ -254,7 +254,7 @@ const CartHistory = ({ navigation }) => {
           </Text>
           <TouchableOpacity 
             style={styles.shopButton}
-            onPress={() => navigation.navigate("Shop")}
+            onPress={() => navigation.navigate("Cart")}
           >
             <Icon name="shopping" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
             <Text style={styles.shopButtonText}>Go Shopping</Text>
