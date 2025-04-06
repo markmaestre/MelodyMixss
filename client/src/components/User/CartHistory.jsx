@@ -11,6 +11,7 @@ import {
   Animated,
   ScrollView,
   Dimensions,
+  Image
 } from "react-native";
 import { useSelector, useDispatch } from "react-redux";
 import axiosInstance from "../../utils/axiosInstance";
@@ -26,7 +27,8 @@ const CartHistory = ({ navigation }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isReviewModalVisible, setReviewModalVisible] = useState(false);
-  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [reviewText, setReviewText] = useState("");
   const [rating, setRating] = useState(0);
   const [activeTab, setActiveTab] = useState("All");
@@ -61,7 +63,7 @@ const CartHistory = ({ navigation }) => {
 
   const fetchCheckoutHistory = async () => {
     try {
-      const response = await axiosInstance.get(`/checkout/history/${userId}`);
+      const response = await axiosInstance.get(`/checkout/history/${userId}?populate=items.product`);
       setCheckoutHistory(response.data);
       setLoading(false);
     } catch (error) {
@@ -78,8 +80,9 @@ const CartHistory = ({ navigation }) => {
 
     dispatch(
       submitReview({
-        orderId: selectedOrderId,
+        orderId: selectedOrder._id,
         userId,
+        productId: selectedProduct._id,
         review: reviewText,
         rating,
       })
@@ -93,12 +96,7 @@ const CartHistory = ({ navigation }) => {
       setReviewText("");
       setRating(0);
       dispatch(resetReviewState());
-
-      setCheckoutHistory((prevHistory) =>
-        prevHistory.map((order) =>
-          order._id === selectedOrderId ? { ...order, hasReviewed: true } : order
-        )
-      );
+      fetchCheckoutHistory();
     }
 
     if (reviewError) {
@@ -141,7 +139,6 @@ const CartHistory = ({ navigation }) => {
     setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
   };
 
-  // Custom star rating component using icons
   const StarRating = ({ rating, setRating, size = 30 }) => {
     return (
       <View style={{ flexDirection: "row" }}>
@@ -160,6 +157,12 @@ const CartHistory = ({ navigation }) => {
         ))}
       </View>
     );
+  };
+
+  const hasReviewedProduct = (order, productId) => {
+    // This would need to be implemented based on your data structure
+    // You might need to fetch reviews for this user and check if they've reviewed this product
+    return false;
   };
 
   const filteredOrders = activeTab === "All" 
@@ -267,45 +270,45 @@ const CartHistory = ({ navigation }) => {
           style={[{ opacity: fadeAnim }, styles.ordersList]}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
+          renderItem={({ item: order }) => (
             <Animated.View style={styles.orderCardWrapper}>
               <TouchableOpacity 
                 style={[
                   styles.orderCard,
-                  { borderLeftColor: getStatusColor(item.status) }
+                  { borderLeftColor: getStatusColor(order.status) }
                 ]}
-                onPress={() => toggleOrderExpansion(item._id)}
+                onPress={() => toggleOrderExpansion(order._id)}
                 activeOpacity={0.7}
               >
                 <View style={styles.orderHeader}>
                   <View style={styles.orderHeaderLeft}>
-                    <View style={[styles.statusIconContainer, { backgroundColor: getStatusColor(item.status) + '22' }]}>
+                    <View style={[styles.statusIconContainer, { backgroundColor: getStatusColor(order.status) + '22' }]}>
                       <Icon 
-                        name={getStatusIcon(item.status)} 
+                        name={getStatusIcon(order.status)} 
                         size={20} 
-                        color={getStatusColor(item.status)} 
+                        color={getStatusColor(order.status)} 
                       />
                     </View>
                     <View>
                       <Text style={styles.orderDate}>
-                        {new Date(item.createdAt).toLocaleDateString()} 
+                        {new Date(order.createdAt).toLocaleDateString()} 
                       </Text>
-                      <Text style={[styles.orderStatus, { color: getStatusColor(item.status) }]}>
-                        {item.status}
+                      <Text style={[styles.orderStatus, { color: getStatusColor(order.status) }]}>
+                        {order.status}
                       </Text>
                     </View>
                   </View>
                   <View style={styles.orderHeaderRight}>
-                    <Text style={styles.orderTotal}>₱{item.totalAmount.toFixed(2)}</Text>
+                    <Text style={styles.orderTotal}>₱{order.totalAmount.toFixed(2)}</Text>
                     <Icon 
-                      name={expandedOrderId === item._id ? "chevron-up" : "chevron-down"} 
+                      name={expandedOrderId === order._id ? "chevron-up" : "chevron-down"} 
                       size={20} 
                       color="#777" 
                     />
                   </View>
                 </View>
 
-                {expandedOrderId === item._id && (
+                {expandedOrderId === order._id && (
                   <View style={styles.orderDetails}>
                     <View style={styles.divider} />
                     
@@ -313,7 +316,7 @@ const CartHistory = ({ navigation }) => {
                       <Icon name="map-marker" size={18} color="#777" />
                       <Text style={styles.detailText}>
                         <Text style={styles.detailLabel}>Delivery Address: </Text>
-                        {item.address}
+                        {order.address}
                       </Text>
                     </View>
                     
@@ -321,7 +324,7 @@ const CartHistory = ({ navigation }) => {
                       <Icon name="phone" size={18} color="#777" />
                       <Text style={styles.detailText}>
                         <Text style={styles.detailLabel}>Contact: </Text>
-                        {item.phone}
+                        {order.phone}
                       </Text>
                     </View>
 
@@ -329,51 +332,72 @@ const CartHistory = ({ navigation }) => {
                       <Icon name="credit-card" size={18} color="#777" />
                       <Text style={styles.detailText}>
                         <Text style={styles.detailLabel}>Payment Method: </Text>
-                        {item.paymentType}
+                        {order.paymentType}
                       </Text>
                     </View>
 
-                    {item.discountApplied && (
+                    {/* Products in Order */}
+                    <View style={styles.productsSection}>
+                      <Text style={styles.sectionTitle}>Products Ordered</Text>
+                      {order.items.map((item, index) => (
+                        <View key={index} style={styles.productItem}>
+                          <Image 
+                            source={{ uri: item.product.image }} 
+                            style={styles.productImage}
+                            resizeMode="cover"
+                          />
+                          <View style={styles.productInfo}>
+                            <Text style={styles.productName}>{item.product.name}</Text>
+                            <Text style={styles.productPrice}>₱{item.product.price.toFixed(2)}</Text>
+                            <Text style={styles.productQuantity}>Quantity: {item.quantity}</Text>
+                            
+                            {order.status === "Delivered" && (
+                              <TouchableOpacity
+                                style={[
+                                  styles.reviewButton,
+                                  hasReviewedProduct(order, item.product._id) && styles.reviewedButton
+                                ]}
+                                onPress={() => {
+                                  setSelectedOrder(order);
+                                  setSelectedProduct(item.product);
+                                  setReviewModalVisible(true);
+                                }}
+                                disabled={hasReviewedProduct(order, item.product._id)}
+                              >
+                                <Icon 
+                                  name={hasReviewedProduct(order, item.product._id) ? "check-circle" : "star-outline"} 
+                                  size={16} 
+                                  color="#FFFFFF" 
+                                />
+                                <Text style={styles.reviewButtonText}>
+                                  {hasReviewedProduct(order, item.product._id) ? "Reviewed" : "Review Product"}
+                                </Text>
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                        </View>
+                      ))}
+                    </View>
+
+                    {order.discountApplied && (
                       <View style={styles.priceDetails}>
                         <View style={styles.priceRow}>
                           <Text style={styles.priceLabel}>Subtotal:</Text>
                           <Text style={styles.priceValue}>
-                            ₱{item.subtotal?.toFixed(2) || item.totalAmount.toFixed(2)}
+                            ₱{order.subtotal?.toFixed(2) || order.totalAmount.toFixed(2)}
                           </Text>
                         </View>
                         <View style={styles.priceRow}>
                           <Text style={styles.discountLabel}>Discount:</Text>
                           <Text style={styles.discountValue}>
-                            -₱{(item.subtotal - item.totalAmount).toFixed(2)}
+                            -₱{(order.subtotal - order.totalAmount).toFixed(2)}
                           </Text>
                         </View>
                         <View style={styles.dividerShort} />
                         <View style={styles.priceRow}>
                           <Text style={styles.totalLabel}>Total:</Text>
-                          <Text style={styles.totalValue}>₱{item.totalAmount.toFixed(2)}</Text>
+                          <Text style={styles.totalValue}>₱{order.totalAmount.toFixed(2)}</Text>
                         </View>
-                      </View>
-                    )}
-
-                    {item.status === "Delivered" && (
-                      <View style={styles.reviewSection}>
-                        {item.hasReviewed ? (
-                          <View style={styles.reviewedBadge}>
-                            <Icon name="check-circle" size={16} color="#2ecc71" />
-                            <Text style={styles.reviewedText}>Review Submitted</Text>
-                          </View>
-                        ) : (
-                          <TouchableOpacity
-                            style={styles.reviewButton}
-                            onPress={() => {
-                              setSelectedOrderId(item._id);
-                              setReviewModalVisible(true);
-                            }}
-                          >
-                            <Icon name="star-outline" size={16} color="#FFFFFF" />
-                            <Text style={styles.reviewButtonText}>Leave a Review</Text>
-                          </TouchableOpacity>
-                        )}
                       </View>
                     )}
                   </View>
@@ -393,7 +417,7 @@ const CartHistory = ({ navigation }) => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>How was your order?</Text>
+              <Text style={styles.modalTitle}>Review Product</Text>
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={() => setReviewModalVisible(false)}
@@ -403,6 +427,17 @@ const CartHistory = ({ navigation }) => {
             </View>
             
             <View style={styles.modalDivider} />
+            
+            {selectedProduct && (
+              <View style={styles.productReviewHeader}>
+                <Image 
+                  source={{ uri: selectedProduct.image }} 
+                  style={styles.modalProductImage}
+                  resizeMode="cover"
+                />
+                <Text style={styles.modalProductName}>{selectedProduct.name}</Text>
+              </View>
+            )}
             
             <View style={styles.ratingContainer}>
               <Text style={styles.ratingLabel}>Your Rating</Text>
@@ -417,7 +452,7 @@ const CartHistory = ({ navigation }) => {
               <Text style={styles.reviewInputLabel}>Your Review</Text>
               <TextInput
                 style={styles.reviewInput}
-                placeholder="Share your experience with this order..."
+                placeholder="Share your experience with this product..."
                 placeholderTextColor="#999"
                 multiline
                 value={reviewText}
@@ -705,37 +740,65 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 13,
   },
-  reviewSection: {
+  productsSection: {
     marginTop: 14,
-    alignItems: "center",
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 10,
+  },
+  productItem: {
+    flexDirection: "row",
+    marginBottom: 15,
+    backgroundColor: "#2A2A2A",
+    borderRadius: 8,
+    padding: 10,
+  },
+  productImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 4,
+    marginRight: 10,
+  },
+  productInfo: {
+    flex: 1,
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 4,
+  },
+  productPrice: {
+    fontSize: 13,
+    color: "#1DB954",
+    marginBottom: 4,
+  },
+  productQuantity: {
+    fontSize: 12,
+    color: "#CCCCCC",
+    marginBottom: 8,
   },
   reviewButton: {
     flexDirection: "row",
     backgroundColor: "#1DB954",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
     borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
+    alignSelf: "flex-start",
+  },
+  reviewedButton: {
+    backgroundColor: "#333",
   },
   reviewButtonText: {
     color: "#FFFFFF",
     fontWeight: "bold",
     marginLeft: 6,
-    fontSize: 13,
-  },
-  reviewedBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(46, 204, 113, 0.2)",
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 16,
-  },
-  reviewedText: {
-    color: "#2ecc71",
-    marginLeft: 6,
-    fontSize: 13,
+    fontSize: 12,
   },
   modalContainer: {
     flex: 1,
@@ -761,6 +824,23 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 4,
+  },
+  productReviewHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  modalProductImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 4,
+    marginRight: 10,
+  },
+  modalProductName: {
+    fontSize: 15,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    flex: 1,
   },
   ratingContainer: {
     alignItems: "center",

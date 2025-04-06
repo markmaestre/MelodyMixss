@@ -15,6 +15,7 @@ import ModifyCheckout from "../components/admin/ModifyCheckout";
 import Notifications from "../components/admin/Notifications";
 import DiscountManagement from "../components/admin/DiscountManagement";
 import DiscountNotifications from "../components/admin/DiscountNotifications";
+import AdminReviews from "../components/admin/AdminReviews"; 
 
 const Stack = createStackNavigator();
 
@@ -50,6 +51,7 @@ const Navigator = () => (
     <Stack.Screen name="Status" component={ModifyCheckout} />
     <Stack.Screen name="Discount" component={DiscountManagement} />
     <Stack.Screen name="discountNotif" component={DiscountNotifications} />
+    <Stack.Screen name="AdminReviews" component={AdminReviews} /> 
    
   </Stack.Navigator>
 );

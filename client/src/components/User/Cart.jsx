@@ -403,13 +403,13 @@ const Cart = ({ navigation }) => {
           <View style={styles.priceContainer}>
             {hasActiveDiscount(item._id) ? (
               <>
-                <Text style={styles.originalPrice}>${item.price.toFixed(2)}</Text>
+                <Text style={styles.originalPrice}>₱{item.price.toFixed(2)}</Text>
                 <Text style={styles.productPrice}>
-                  ${getDiscountedPrice(item).toFixed(2)}
+                ₱{getDiscountedPrice(item).toFixed(2)}
                 </Text>
               </>
             ) : (
-              <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
+              <Text style={styles.productPrice}>₱{item.price.toFixed(2)}</Text>
             )}
           </View>
           

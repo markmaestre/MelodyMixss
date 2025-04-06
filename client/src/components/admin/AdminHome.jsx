@@ -18,6 +18,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { LineChart, PieChart } from "react-native-chart-kit";
 import axiosInstance from '../../utils/axiosInstance';
 import { LinearGradient } from 'expo-linear-gradient';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+
 
 const AdminDashboard = () => {
   const { user } = useSelector((state) => state.auth);
@@ -98,11 +100,11 @@ const AdminDashboard = () => {
     navigation.navigate("Discount");
   };
 
-  const goToUserManagement = () => {
-    navigation.navigate("Users");
+  const goToReviewManagement = () => {
+    navigation.navigate("AdminReviews");
   };
 
-  // Process orders data for chart
+  
   const getOrderStatusData = () => {
     const statusCounts = {
       "Pending": 0,
@@ -193,12 +195,13 @@ const AdminDashboard = () => {
 
   const adminActions = [
     {
-      title: "Manage Users",
-      description: "View and manage user accounts",
-      icon: "people",
+      title: "Review",
+      description: "View and manage user reviews",
+      icon: <Icon name="rate-review" size={24} color="#fff" />,
       color: "#105AB9",
-      onPress: goToUserManagement
+      onPress: goToReviewManagement
     },
+     
     {
       title: "Manage Orders",
       description: "Process and track orders",
