@@ -253,6 +253,8 @@ const HomeScreen = ({ navigation }) => {
     }
   };
 
+
+  //laman ng content
   const renderDrawer = () => (
     <View style={styles.drawerContainer}>
       <View style={styles.drawerHeader}>

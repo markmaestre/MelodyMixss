@@ -1,57 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../../utils/axiosInstance";
 
-// Fetch all products
-export const fetchProducts = createAsyncThunk(
-  "products/fetchProducts",
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.get("/products");
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response.data);
-    }
-  }
-);
-
-// Create a new product
-export const createProduct = createAsyncThunk(
-  "products/createProduct",
-  async (productData, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.post("/products/add", productData);
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response.data);
-    }
-  }
-);
-
-// Update a product
-export const updateProduct = createAsyncThunk(
-  "products/updateProduct",
-  async ({ id, productData }, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.put(`/products/update/${id}`, productData);
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response.data);
-    }
-  }
-);
-
-// Delete a product
-export const deleteProduct = createAsyncThunk(
-  "products/deleteProduct",
-  async (id, { rejectWithValue }) => {
-    try {
-      await axiosInstance.delete(`/products/delete/${id}`);
-      return id;
-    } catch (error) {
-      return rejectWithValue(error.response.data);
-    }
-  }
-);
 
 // Product slice
 const productSlice = createSlice({
@@ -126,7 +75,66 @@ const productSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       });
+      
   },
+  
 });
+
+
+// Create a new product
+export const createProduct = createAsyncThunk(
+  "products/createProduct",
+  async (productData, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post("/products/add", productData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+// Update a product
+export const updateProduct = createAsyncThunk(
+  "products/updateProduct",
+  async ({ id, productData }, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.put(`/products/update/${id}`, productData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+
+
+// Delete a product
+export const deleteProduct = createAsyncThunk(
+  "products/deleteProduct",
+  async (id, { rejectWithValue }) => {
+    try {
+      await axiosInstance.delete(`/products/delete/${id}`);
+      return id;
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+// Fetch all products
+export const fetchProducts = createAsyncThunk(
+  "products/fetchProducts",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get("/products");
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+
 
 export default productSlice.reducer;

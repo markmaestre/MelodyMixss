@@ -107,7 +107,7 @@ export const sendLocalNotification = async (title, body, data = {}) => {
         sound: true,
         vibrate: [0, 250, 250, 250],
       },
-      trigger: null, // Send immediately
+      trigger: null, 
     });
     return true;
   } catch (error) {

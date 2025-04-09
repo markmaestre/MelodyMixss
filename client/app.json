@@ -11,8 +11,6 @@
     "ios": {
       "supportsTablet": true
     },
-
-    
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
@@ -41,9 +39,9 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps.230232232756-mu14vagp68v83qpqrjvea2jc3lfb6m8t"
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
-
     "experiments": {
       "typedRoutes": true
     },

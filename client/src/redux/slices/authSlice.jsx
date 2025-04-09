@@ -2,63 +2,6 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../../utils/axiosInstance";
 import { saveToken, removeToken } from "../../utils/auth";
 
-export const registerUser = createAsyncThunk(
-  "auth/register",
-  async (userData, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.post("/auth/register", userData);
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response.data);
-    }
-  }
-);
-
-export const loginUser = createAsyncThunk(
-  "auth/login",
-  async (credentials, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.post("/auth/login", credentials);
-      await saveToken(response.data.token); 
-
-      if (credentials.pushToken) {
-        await axiosInstance.post("/auth/savetoken", {
-          userId: response.data.user._id,
-          token: credentials.pushToken,
-        });
-      }
-
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response.data);
-    }
-  }
-);
-
-export const logoutUser = createAsyncThunk("auth/logout", async (_, { dispatch }) => {
-  await removeToken(); 
-  dispatch(logoutSuccess()); 
-});
-
-export const updateUserProfile = createAsyncThunk(
-  "auth/updateProfile",
-  async ({ userId, formData }, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.put(
-        `/auth/profile/${userId}`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
-      return response.data.user;
-    } catch (error) {
-      return rejectWithValue(error.response.data);
-    }
-  }
-);
 
 const authSlice = createSlice({
   name: "auth",
@@ -140,6 +83,64 @@ const authSlice = createSlice({
   },
 });
 
+
+export const registerUser = createAsyncThunk(
+  "auth/register",
+  async (userData, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post("/auth/register", userData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const loginUser = createAsyncThunk(
+  "auth/login",
+  async (credentials, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post("/auth/login", credentials);
+      await saveToken(response.data.token); 
+
+      if (credentials.pushToken) {
+        await axiosInstance.post("/auth/savetoken", {
+          userId: response.data.user._id,
+          token: credentials.pushToken,
+        });
+      }
+
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const logoutUser = createAsyncThunk("auth/logout", async (_, { dispatch }) => {
+  await removeToken(); 
+  dispatch(logoutSuccess()); 
+});
+
+export const updateUserProfile = createAsyncThunk(
+  "auth/updateProfile",
+  async ({ userId, formData }, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.put(
+        `/auth/profile/${userId}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      return response.data.user;
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
 export const { setPushToken, resetRegisterSuccess, resetLoginSuccess, logoutSuccess } =
   authSlice.actions;
 export default authSlice.reducer;

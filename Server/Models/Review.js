@@ -37,10 +37,10 @@ const ReviewSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// Add text index for search functionality
+
 ReviewSchema.index({ review: 'text' });
 
-// Virtual populate to get checkout details
+
 ReviewSchema.virtual('orderDetails', {
   ref: 'Checkout',
   localField: 'orderId',

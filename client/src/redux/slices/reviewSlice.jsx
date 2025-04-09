@@ -1,92 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../../utils/axiosInstance";
 
-// Async thunk to submit a review
-export const submitReview = createAsyncThunk(
-  "review/submitReview",
-  async ({ orderId, userId, productId, review, rating }, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.post("/reviews", {
-        orderId,
-        userId,
-        productId,
-        review,
-        rating,
-      });
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.error || "Failed to submit review");
-    }
-  }
-);
-
-// Async thunk to fetch all reviews
-export const fetchAllReviews = createAsyncThunk(
-  "review/fetchAllReviews",
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.get("/reviews");
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.error || "Failed to fetch reviews");
-    }
-  }
-);
-
-// Async thunk to fetch reviews for a user
-export const fetchUserReviews = createAsyncThunk(
-  "review/fetchUserReviews",
-  async (userId, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.get(`/reviews/user/${userId}`);
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.error || "Failed to fetch user reviews");
-    }
-  }
-);
-
-// Async thunk to fetch reviews for a product
-export const fetchProductReviews = createAsyncThunk(
-  "review/fetchProductReviews",
-  async (productId, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.get(`/reviews/product/${productId}`);
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.error || "Failed to fetch product reviews");
-    }
-  }
-);
-
-// Async thunk to update a review
-export const updateReview = createAsyncThunk(
-  "review/updateReview",
-  async ({ reviewId, review, rating }, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.put(`/reviews/${reviewId}`, {
-        review,
-        rating,
-      });
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.error || "Failed to update review");
-    }
-  }
-);
-
-// Async thunk to delete a review
-export const deleteReview = createAsyncThunk(
-  "review/deleteReview",
-  async (reviewId, { rejectWithValue }) => {
-    try {
-      const response = await axiosInstance.delete(`/reviews/${reviewId}`);
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.error || "Failed to delete review");
-    }
-  }
-);
 
 // Review slice
 const reviewSlice = createSlice({
@@ -95,10 +9,10 @@ const reviewSlice = createSlice({
     loading: false,
     error: null,
     success: false,
-    reviews: [], // All reviews
-    userReviews: [], // Reviews by specific user
-    productReviews: [], // Reviews for specific product
-    currentReview: null, // Currently viewed/edited review
+    reviews: [], 
+    userReviews: [],
+    productReviews: [], 
+    currentReview: null, 
   },
   reducers: {
     resetReviewState: (state) => {
@@ -222,8 +136,94 @@ const reviewSlice = createSlice({
   },
 });
 
-// Export actions
+
+export const submitReview = createAsyncThunk(
+  "review/submitReview",
+  async ({ orderId, userId, productId, review, rating }, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post("/reviews", {
+        orderId,
+        userId,
+        productId,
+        review,
+        rating,
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || "Failed to submit review");
+    }
+  }
+);
+
+// Async thunk to fetch all reviews
+export const fetchAllReviews = createAsyncThunk(
+  "review/fetchAllReviews",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get("/reviews");
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || "Failed to fetch reviews");
+    }
+  }
+);
+
+// Async thunk to fetch reviews for a user
+export const fetchUserReviews = createAsyncThunk(
+  "review/fetchUserReviews",
+  async (userId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`/reviews/user/${userId}`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || "Failed to fetch user reviews");
+    }
+  }
+);
+
+// Async thunk to fetch reviews for a product
+export const fetchProductReviews = createAsyncThunk(
+  "review/fetchProductReviews",
+  async (productId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get(`/reviews/product/${productId}`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || "Failed to fetch product reviews");
+    }
+  }
+);
+
+// Async thunk to update a review
+export const updateReview = createAsyncThunk(
+  "review/updateReview",
+  async ({ reviewId, review, rating }, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.put(`/reviews/${reviewId}`, {
+        review,
+        rating,
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || "Failed to update review");
+    }
+  }
+);
+
+// Async thunk to delete a review
+export const deleteReview = createAsyncThunk(
+  "review/deleteReview",
+  async (reviewId, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.delete(`/reviews/${reviewId}`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || "Failed to delete review");
+    }
+  }
+);
+
 export const { resetReviewState, setCurrentReview, clearProductReviews } = reviewSlice.actions;
 
-// Export reducer
+
 export default reviewSlice.reducer;
